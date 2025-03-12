@@ -1,1 +1,1 @@
-# color-palette
+# color-picker
