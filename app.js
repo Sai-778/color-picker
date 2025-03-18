@@ -3,9 +3,16 @@ const colorDivs = document.querySelectorAll(".color");
 const generateBtn = document.querySelector(".generate");
 const sliders = document.querySelectorAll('input[type ="range"]');
 const currentHexes = document.querySelectorAll(".color h2");
+const popup = document.querySelector(".copy-container");
+const adjustButton = document.querySelectorAll(".adjust");
+const lockButton = document.querySelectorAll(".lock");
+const closeAdjustments = document.querySelectorAll(".colse-adjustment");
+const slidersContainers = document.querySelectorAll(".sliders");
 let initialColors;
 
 //event listeners
+generateBtn.addEventListener('click',randomColors);
+
 sliders.forEach((slider) => {
   slider.addEventListener("input", hslControls);
 });
@@ -15,6 +22,30 @@ colorDivs.forEach((div, index) => {
   });
 });
 
+currentHexes.forEach((hex) => {
+  hex.addEventListener("click", () => {
+    copyToClipboard(hex);
+  });
+});
+
+popup.addEventListener('transitionend',()=>{
+  const popupBox = popup.children[0];
+  popup.classList.remove("active");
+  popupBox.classList.remove("active");
+  
+});
+
+adjustButton.forEach((button,index) =>{
+  button.addEventListener('click',()=>{
+    openAdjustmentPanel(index);
+  });
+});
+
+closeAdjustments.forEach((button,index)=>{
+  button.addEventListener('click',()=>{
+    closeAdjustmentPanel(index);
+  })
+})
 //Functions
 //color generator
 
@@ -53,6 +84,13 @@ function randomColors() {
 
   //reset inputes
   resetInputs();
+
+  //check for button contrast
+  adjustButton.forEach((button,index)=>{
+    checkTextContrast(initialColors[index],button);
+    checkTextContrast(initialColors[index],lockButton[index]);
+  })
+
 }
 
 function checkTextContrast(color, text) {
@@ -105,7 +143,6 @@ function hslControls(e) {
     .set("hsl.h", hue.value);
 
   colorDivs[index].style.backgroundColor = color;
-  console.log("New Background Color:", colorDivs[index].style.backgroundColor);
   colorizeSliders(color, hue, brightness, saturation);
 }
 
@@ -125,25 +162,44 @@ function updateTextUI(index) {
 
 function resetInputs() {
   const sliders = document.querySelectorAll(".sliders input");
-  sliders.forEach(slider => {
+  sliders.forEach((slider) => {
     if (slider.name === "hue") {
       const hueColor = initialColors[slider.getAttribute("data-hue")];
       const hueValue = chroma(hueColor).hsl()[0];
-      //   console.log(hueValue);
       slider.value = Math.floor(hueValue);
     }
     if (slider.name === "brightness") {
       const brightColor = initialColors[slider.getAttribute("data-bright")];
       const brightValue = chroma(brightColor).hsl()[2];
-      //   console.log(brightValue);
       slider.value = Math.floor(brightValue * 100) / 100;
     }
     if (slider.name === "saturation") {
       const satColor = initialColors[slider.getAttribute("data-sat")];
       const satValue = chroma(satColor).hsl()[1];
-      //   console.log(satValue);
       slider.value = Math.floor(satValue * 100) / 100;
     }
   });
+}
+
+function copyToClipboard(hex) {
+  const el = document.createElement("textarea");
+  el.value = hex.innerText;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand("copy");
+  document.body.removeChild(el);
+
+  //pop up
+  const popupBox = popup.children[0];
+  popup.classList.add("active");
+  popupBox.classList.add("active");
+}
+
+function openAdjustmentPanel(index){
+  slidersContainers[index].classList.toggle("active");
+}
+
+function closeAdjustmentPanel(index){
+  slidersContainers[index].classList.remove("active");
 }
 randomColors();
