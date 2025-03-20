@@ -10,6 +10,8 @@ const closeAdjustments = document.querySelectorAll(".colse-adjustment");
 const slidersContainers = document.querySelectorAll(".sliders");
 let initialColors;
 
+let savedPalettes =[];
+
 //event listeners
 generateBtn.addEventListener('click',randomColors);
 
@@ -45,7 +47,13 @@ closeAdjustments.forEach((button,index)=>{
   button.addEventListener('click',()=>{
     closeAdjustmentPanel(index);
   })
-})
+});
+ 
+
+lockButton.forEach((button) => {
+  button.addEventListener("click", lockLayer);
+  });
+
 //Functions
 //color generator
 
@@ -61,7 +69,14 @@ function randomColors() {
     const randomColor = generateHex();
 
     //add it to the array
-    initialColors.push(chroma(randomColor).hex());
+
+    if(div.classList.contains('locked')){
+      initialColors.push(hexText.innerText);
+      return;
+    }else{
+        initialColors.push(chroma(randomColor).hex());
+    }
+    
 
     //add the color to  baground
 
@@ -89,7 +104,7 @@ function randomColors() {
   adjustButton.forEach((button,index)=>{
     checkTextContrast(initialColors[index],button);
     checkTextContrast(initialColors[index],lockButton[index]);
-  })
+  });
 
 }
 
@@ -202,4 +217,89 @@ function openAdjustmentPanel(index){
 function closeAdjustmentPanel(index){
   slidersContainers[index].classList.remove("active");
 }
+
+function lockLayer(e) {
+  const lockBtn = e.currentTarget; // Selects the button
+  const lockIcon = lockBtn.querySelector("svg"); // Selects the icon
+  const colorDiv = lockBtn.closest(".color"); // Finds the parent color div
+  const adjustBtn = colorDiv.querySelector(".adjust"); // Finds the adjust button
+
+  if (!colorDiv) {
+    console.error("Error: Cannot find color div. Make sure the button is inside an element with class 'color'.");
+    return;
+  }
+
+  // Toggle the "locked" class on the color div
+  colorDiv.classList.toggle("locked");
+
+  // Toggle the lock/unlock icon
+  if (colorDiv.classList.contains("locked")) {
+    lockIcon.classList.remove("fa-lock-open");
+    lockIcon.classList.add("fa-solid", "fa-lock");
+    adjustBtn.disabled = true; // Disable adjust button
+    adjustBtn.style.opacity = "0.5"; // Make it look disabled
+  } else {
+    lockIcon.classList.remove("fa-solid", "fa-lock");
+    lockIcon.classList.add("fa-lock-open");
+    adjustBtn.disabled = false; // Enable adjust button
+    adjustBtn.style.opacity = "1"; // Restore appearance
+  }
+}
+
+// implement save to pallete and local storage
+const saveBtn = document.querySelector(".save");
+const submitSave =document.querySelector(".submit-save");
+const closeSave =document.querySelector(".close-save");
+const saveContainer =document.querySelector(".save-container");
+const saveInput =document.querySelector(".save-container input");
+
+
+//event Listeners
+saveBtn.addEventListener('click',openPalette);
+closeSave.addEventListener('click',closePalette);
+submitSave.addEventListener('click',savePalette);
+
+
+function openPalette(e){
+  const popup = saveContainer.children[0];
+  saveContainer.classList.add('active');
+  popup.classList.add('active');
+
+}
+
+function closePalette(e){
+  const popup =saveContainer.children[0];
+  saveContainer.classList.remove("active");
+  popup.classList.add("remove");
+}
+
+function savePalette(e){
+  saveContainer.classList.remove("active");
+  popup.classList.remove("active");
+  const name =saveInput.value;
+  const colors =[];
+  currentHexes.forEach(hex =>{
+    colors.push(hex.innerText);
+  });
+  //generate object
+  let paletteNr =savedPalettes.length;
+  const paletteObj ={name,colors,nr: paletteNr};
+  savedPalettes.push(paletteObj);
+  //save to local storage
+  savetoLocal(paletteObj);
+  saveInput.value="";
+}
+
+function savetoLocal(paletteObj){
+  let localPalettes;
+  if(localStorage.getItem("palettes")===null){
+    localPalettes = [];
+  }else{
+    localPalettes = JSON.parse(localStorage.getItem("palettes"));
+  }
+  localPalettes.push(paletteObj);
+  localStorage.setItem("palettes",JSON.stringify(localPalettes));
+
+}
+
 randomColors();
